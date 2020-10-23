@@ -335,6 +335,6 @@ if __name__ == '__main__':
     now = time.strftime("%Y-%m-%d", time.localtime(time.time()))
 
     summary = {'Passed': passed, 'Failed': failed, 'Skipped': skipped,
-               'ResultFile': os.path.abspath("TestResult_" + action + "_" + now + ".xlsx")}
+               'ResultFile': os.path.abspath("./TestResult/" + u"TestResult_" + action + "_" + now + ".xlsx")}
     js = json.dumps(summary)
     print(js)
