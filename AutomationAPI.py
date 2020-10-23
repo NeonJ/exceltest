@@ -24,7 +24,33 @@ handler.setFormatter(formatter)
 # logger.addHandler(console)
 
 
-def extraction_get(start_str, end_str, extraction_data):  # 获取参数化字符
+servicename = []
+filename = {}
+fileversion = {}
+site = {}
+custom_param = {}
+headers = {}
+param = ''
+data = ''
+api_url = ''
+start_time = time.time()
+end_time = time.time()
+response = {}
+api = ''
+passed = 0
+failed = 0
+skipped = 0
+
+# 获取testsuite列表
+def get_test_case(testsuite):
+    wb = load_workbook(testsuite)
+    for row in wb[u"TestSuitList"].rows:
+        filename[row[1].value] = row[3].value
+        fileversion[row[3].value] = row[4].value
+        servicename.append(row[1].value)
+
+# 获取参数化字符
+def extraction_get(start_str, end_str, extraction_data):
     start = extraction_data.find(start_str)
     if start >= 0:
         start += len(start_str)
@@ -32,8 +58,8 @@ def extraction_get(start_str, end_str, extraction_data):  # 获取参数化字�
         if end >= 0:
             return extraction_data[start:end].strip()
 
-
-def func_test(api_url):  # 创建调用方法
+# 创建调用方法
+def func_test(api_url):
     if method == "POST":
         if len(header_content_type) == 0 and data != "":
             return requests.post(url=api_url, headers=headers, data=data)
@@ -50,8 +76,8 @@ def func_test(api_url):  # 创建调用方法
     elif method == "DELETE":
         return requests.delete(api_url, params=param, headers=header_content_type)
 
-
-def response_matching(response_value, expect_value):  # 创建断言方法
+# 创建断言方法
+def response_matching(response_value, expect_value):
     if rule == '包含':
         return json.dumps(response_value).count(str(expect_value)) > 0
     elif rule == '不包含':
@@ -69,109 +95,29 @@ def response_matching(response_value, expect_value):  # 创建断言方法
         return json.dumps(response_value).count(expect_str, 1, len(json.dumps(response_value))) == int(num)
     else:
         print("断言方法错误")
-        sys.exit(0)
+        sys.exit()
 
 
 if __name__ == '__main__':
+    get_test_case("TestSuite.xlsx")
     logger.info(
         "------------------------------------- Execute TestCases -----------------------------------------------")
-    site = {}
-    custom_param = {}
-    headers = {}
-    param = ''
-    data = ''
-    api_url = ''
-    start_time = time.time()
-    end_time = time.time()
-    response = {}
-    api = ''
-    passed = 0
-    failed = 0
-    skipped = 0
 
     if len(sys.argv) < 2:
         print("Lost Service Name")
-        sys.exit(0)
+        sys.exit()
     action = sys.argv[1]
-    if action not in ['ami-api-archive-service', 'ami-api-big-data-service', 'ami-api-config-service',
-                      'ami-api-gateway-service', 'ami-api-hes-service', 'ami-api-ivy-app-service',
-                      'ami-api-ivy-service', 'ami-api-job-service', 'ami-api-mdm-service', 'ami-api-oss-service',
-                      'ami-api-register-service', 'ami-api-system-service', 'ami-interface', 'ami-web', 'hes-645-fep',
-                      'hes-api', 'hes-core', 'hes-fep', 'kafka', 'map', 'minio', 'postgis', 'redis-cluster',
-                      'redis-ha-server', 'spark-master', 'spark-worker', 'zk']:
+    if action not in servicename:
         print('Service Not in The List')
-        sys.exit(0)
-    if action == 'ami-api-archive-service':  # 与脚本放在同一目录可直接写excel名称
-        wb = load_workbook("ami-api-archive-service.xlsx", data_only=False)
+        sys.exit()
+
+    filepath = filename[action]
+    try:
+        wb = load_workbook('./TestCase/'+filepath)
         sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'hes-api':
-        wb = load_workbook("hes-api.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'ami-api-big-data-service':
-        wb = load_workbook("ami-api-big-data-service.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'ami-api-config-service':
-        wb = load_workbook("ami-api-config-service.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'ami-api-gateway-service':
-        wb = load_workbook("ami-api-gateway-service.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'ami-api-hes-service':
-        wb = load_workbook("ami-api-hes-service.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'ami-api-ivy-app-service':
-        wb = load_workbook("ami-api-ivy-app-service.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'ami-api-ivy-service':
-        wb = load_workbook("ami-api-ivy-service.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'ami-api-job-service':
-        wb = load_workbook("ami-api-job-service.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'ami-api-mdm-service':
-        wb = load_workbook("ami-api-mdm-service.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'ami-api-register-service':
-        wb = load_workbook("ami-api-register-service.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'ami-api-system-service':
-        wb = load_workbook("ami-api-system-service.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'ami-interface':
-        wb = load_workbook("ami-interface.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'ami-web':
-        wb = load_workbook("ami-web.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'hes-core':
-        wb = load_workbook("hes-core.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'hes-fep':
-        wb = load_workbook("hes-fep.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    elif action == 'hes-core':
-        wb = load_workbook("hes-core.xlsx", data_only=False)
-        sheet = wb.sheetnames
-        # print(sheet)
-    else:
-        print("Serice No in The List")
-        sys.exit(0)
+    except IOError:
+        print ("没有找到TestCase文件或读取文件失败")
+        sys.exit()
 
     for row in wb[u"全局参数化配置"].rows:  # excel表格对应的全局参数获取
         site[row[0].value] = row[1].value
@@ -382,17 +328,12 @@ if __name__ == '__main__':
                     extraction_dict[extraction_value] = response[extraction_value]
                 logger.info("extraction_dict: {}".format(extraction_dict))
             now = time.strftime("%Y-%m-%d", time.localtime(time.time()))
-            wb.save(u"TestResult_" + action + "_" + now + ".xlsx")
+            wb.save("./TestResult/" + u"TestResult_" + action + "_" + now + ".xlsx")
 
     logger.info("所有任务结束花费总时间 {:.0f}分 {:.0f}秒".format((time.time() - start_time) // 60, (time.time() - start_time) % 60))
 
     now = time.strftime("%Y-%m-%d", time.localtime(time.time()))
-    # result = load_workbook("TestResult_" + action + "_" + now + ".xlsx", data_only=False, keep_vba=True, read_only=False,
-    #                        keep_links=True)
-    # sheet = result['测试报告']
-    # passed = sheet.cell(4, 4).value
-    # failed = sheet.cell(4, 5).value
-    # skipped = sheet.cell(4, 6).value
+
     summary = {'Passed': passed, 'Failed': failed, 'Skipped': skipped,
                'ResultFile': os.path.abspath("TestResult_" + action + "_" + now + ".xlsx")}
     js = json.dumps(summary)
